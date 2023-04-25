@@ -15,17 +15,24 @@ background_color = (255, 255, 255)
 font = pygame.font.Font(None, 36)
 
 # Caixa de texto
-input_box = pygame.Rect(50, 50, 785, 32)
+input_box = pygame.Rect(50, 50, 770, 32)
 input_text = ''
 
-
-# Fonte e tamanho do texto na caixa de texto
-font = pygame.font.Font(None, 36)
-
+# variável para controlar o loop principal
 wave_width = 20
 wave_height = 50
 x_pos = 50
 y_pos = 160
+
+def set_global_variables():
+    global wave_width
+    global wave_height
+    global x_pos
+    global y_pos
+    wave_width = 20
+    wave_height = 50
+    x_pos = 50
+    y_pos = 160
 
 def vertical_line():
     pygame.draw.line(screen, (255, 50, 50), (x_pos, y_pos), (x_pos, y_pos + wave_height),3)
@@ -61,7 +68,7 @@ def draw_encoded_nrz_L(encoded_bits, screen):
     text = font.render("NRZ-L", True, (0, 0, 0))
     screen.blit(text, (50, 20))
 
-    # Configurações do desenho
+    # primeiro bit
     last_bit = 'x'
     count = 0
 
@@ -82,6 +89,8 @@ def draw_encoded_nrz_I(encoded_bits, screen):
     text = font.render("NRZ-i", True, (0, 0, 0))
     screen.blit(text, (50, 20))
 
+    # primeiro bit
+    global x_pos
     is_down = False
     count = 0
 
@@ -95,7 +104,6 @@ def draw_encoded_nrz_I(encoded_bits, screen):
             horizontal_line_up(count)
         else:
             horizontal_line_down(count)
-        global x_pos
         x_pos += wave_width
         count += 1
 
@@ -103,9 +111,10 @@ def draw_encoded_machester(encoded_bits, screen):
     text = font.render("Manchester", True, (0, 0, 0))
     screen.blit(text, (50, 20))
 
-    count = 0
-    last_bit = 'x' # Valor inicial para não dar erro na comparação
+    #primeiro bit
+    last_bit = 'x' 
     global x_pos
+    count = 0
 
     # Desenha as ondas do sinal digital de acordo com a codificação de linha
     for bit in encoded_bits:
@@ -130,9 +139,10 @@ def draw_encoded_differencial_machester(encoded_bits, screen):
     text = font.render("Manchester Diferencial", True, (0, 0, 0))
     screen.blit(text, (50, 20))
 
-    count = 0
-    last_bit = 'x' # Valor inicial para não dar erro na comparação
+    #primeiro bit
+    last_bit = 'x'
     is_down = True
+    count = 0
     global x_pos
 
     # Desenha as ondas do sinal digital de acordo com a codificação de linha
@@ -160,8 +170,10 @@ def draw_encoded_AMI(encoded_bits, screen):
     text = font.render("Bipolar-AMI", True, (0, 0, 0))
     screen.blit(text, (50, 20))
 
+    #primeiro bit
     is_down = False
     last_bit = '0'
+    global x_pos
     count = 0
 
     # Desenha as ondas do sinal digital de acordo com a codificação de linha
@@ -187,7 +199,6 @@ def draw_encoded_AMI(encoded_bits, screen):
                 else:
                     vertical_half_down(count)
             horizontal_line_mid(count)
-        global x_pos
         x_pos += wave_width
         count += 1
         last_bit = bit
@@ -196,8 +207,10 @@ def draw_encoded_pseudoternary(encoded_bits, screen):
     text = font.render("Pseudoternary", True, (0, 0, 0))
     screen.blit(text, (50, 20))
 
+    #primeiro bit
     is_down = False
     last_bit = '0'
+    global x_pos
     count = 0
 
     # Desenha as ondas do sinal digital de acordo com a codificação de linha
@@ -223,7 +236,6 @@ def draw_encoded_pseudoternary(encoded_bits, screen):
                 else:
                     vertical_half_down(count)
             horizontal_line_mid(count)
-        global x_pos
         x_pos += wave_width
         count += 1
         last_bit = bit
@@ -241,9 +253,6 @@ def draw_bits(bits, screen):
         
         x += wave_width
         count += 1
-
-first = False
-selected_function = draw_encoded_pseudoternary
 
 # Função para desenhar os botões de escolha de função
 def draw_function_buttons(screen, function_names, button_width, button_height, x_pos, y_pos, font_size):
@@ -299,11 +308,8 @@ while True:
     pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
     text_surface = font.render(input_text, True, (0, 0, 0))
     screen.blit(text_surface, (input_box.x+5, input_box.y+5))
-    wave_width = 20
-    wave_height = 50
-    x_pos = 50
-    y_pos = 160
     
+    set_global_variables()
     draw_bits(input_text, screen)
     selected_function(input_text, screen)
     
