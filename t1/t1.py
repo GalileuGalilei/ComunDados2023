@@ -5,7 +5,7 @@ import sys
 Trabalho 1 de Comunicação de Dados
 Alunos:
     - Alfredo Cossetin Neto
-    - Mauro Roberto Trevisan
+    - Mauro Roberto Machado Trevisan
     - Ramon Godoy Izidoro
     - Pedro Henrique da Silva Hinerasky
 
