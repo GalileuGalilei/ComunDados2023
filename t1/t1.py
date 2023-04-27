@@ -1,6 +1,19 @@
 import pygame
 import sys
 
+'''
+Trabalho 1 de Comunicação de Dados
+Alunos:
+    - Alfredo Cossetin Neto
+    - Mauro Roberto Trevisan
+    - Ramon Godoy Izidoro
+    - Pedro Henrique da Silva Hinerasky
+
+Algortimos de codificação de linha extras implementados:
+    - MLT-3
+    - 4B/5B
+'''
+
 pygame.init()
 
 # Configurações da janela
