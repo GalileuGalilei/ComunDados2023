@@ -1,5 +1,5 @@
-# first of all import the socket library
-import socket		
+import socket
+import math		
 
 #converte um int para uma lista de bits
 def integer_to_bit_list(integer):
@@ -23,13 +23,14 @@ def data_bit_stuffing(data):
             data.insert(i+6, '0')
 
 #monta o frame
-def make_frame(data):
+def make_frame(data, num_of_frames, frame_id):
     #monta a flag
     flag = ['0', '1', '1', '1', '1', '1', '1', '0']
 
-    #monta o header
-    size = len(data)
-    header = integer_to_bit_list(size)
+    #monta o header com o numero de frames e o id do frame (nao necessariamente nessa ordem)
+    header = []
+    header += integer_to_bit_list(frame_id)
+    header += integer_to_bit_list(num_of_frames)
 
     #faz bit stuffing da mensagem
     data_bit_stuffing(data)
@@ -47,52 +48,56 @@ def make_frame(data):
 
     return bitarray
 
+def separate_data(data, num_of_frames):
+    data_pieces = []
+    for i in range(num_of_frames - 1):
+        data_pieces.append(data[i*100: (i+1)*100])
+
+    data_pieces.append(data[(num_of_frames-1)*100: ])
+
+    return data_pieces
+
 def main():
-    # next create a socket object
     s = socket.socket()		
     print ("Socket successfully created")
-
-    # reserve a port on your computer in our
-    # case it is 12345 but it can be anything
     port = 12345			
 
-    # Next bind to the port
-    # we have not typed any ip in the ip field
-    # instead we have inputted an empty string
-    # this makes the server listen to requests
-    # coming from other computers on the network
     s.bind(('', port))		
     print ("socket binded to %s" %(port))
 
-    # put the socket into listening mode
     s.listen(5)	
     print ("socket is listening")   
-    	
-    # define a mensagem a ser enviada
-    data = 'Chupa meu pau'
-    #transforma em uma lista de bits
+
+    # define a mensagem a ser enviada e transforma em uma lista de bits
+    data = 'Chupa meu pau Amogus SUS hahaha memes cu sexo ola pessoal yee AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
     data = string_to_bit_list(data)
-    #monta o frame
-    data = make_frame(data)
-    #monta novamente em uma string
-    str = ''
-    for i in range(len(data)):
-        str += data[i]
 
-    # a forever loop until we interrupt it or
-    # an error occurs
+    #separa o dado a ser enviado em diferentes pedacos, que serao transformados em frames
+    num_of_frames = math.ceil(len(data)/100)
+    data_pieces = separate_data(data, num_of_frames)
+
+    #monta os frames
+    frames = []
+    for i in range(num_of_frames):
+        frame = make_frame(data_pieces[i], num_of_frames, i)
+        frames.append(frame)
+    	
+    c, addr = s.accept()	
+    print ('Got connection from', addr )
+
+    i = 0
     while True:
-        # wait for.
-        c, addr = s.accept()	
-        print ('Got connection from', addr )
+        #transforma a lista de bits em uma string de bits
+        str = ''
+        for j in range(len(frames[i])):
+            str += frames[i][j]
 
-        # send a thank you message to the client. encoding to send byte type.
         c.send(str.encode())
 
-        # Close the connection with the client
-        c.close()
-        # Breaking once connection closed
-        break
+        i += 1
+        if(i >= num_of_frames):
+            c.close()
+            break
 
 if __name__ == '__main__':
     main()

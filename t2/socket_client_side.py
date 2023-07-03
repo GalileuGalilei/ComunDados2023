@@ -6,8 +6,8 @@ def get_data_from_frame(frame):
     flag = ['0', '1', '1', '1', '1', '1', '1', '0']
 
     #pega o header, corpo da msg, trailer e flag da msg
-    header = frame[8:16]
-    data = frame[16:-16]
+    header = frame[8:24]
+    data = frame[24:-16]
     trailer = frame[-16:-8]
     flag2 = frame[-8:]
 
@@ -20,10 +20,12 @@ def get_data_from_frame(frame):
     if trailer != ['0'] * 8:
         print("Error: trailer != ['0'] * 8")
         return None
+    
+    frame_id = int(''.join(header[:8]), 2)
+    num_of_frames = int(''.join(header[8:]), 2)
 
     #retorna a mensagem
-    size = int(''.join(header), 2)
-    return data[:size]
+    return data, frame_id, num_of_frames
 
 #converte lista de bits pra string
 def bit_list_to_string(bit_list):
@@ -38,24 +40,26 @@ def remove_bit_stuffing(data):
             data.pop(i+6)
 
 def main():
-    # Create a socket object
+    # Cria um socket, associa a porta 12345 e conecta ao servidor local
     s = socket.socket()
-
-    # Define the port on which you want to connect            
     port = 12345   
-    # connect to the server on local computer
     s.connect(('127.0.0.1', port))
 
-    # receive data from the server and decoding to get the string.
-    raw_data = s.recv(1024)
-    data = get_data_from_frame(list(raw_data.decode()))
-    #remove o bit extra do bit stuffing
-    remove_bit_stuffing(data)
-    
-    #printa a mensagem decodificada
-    print(bit_list_to_string(data))
-    # close the connection
-    s.close() 
+    #string final para concatenar os dados dos frames
+    final_data = []
+    while True:
+        raw_data = s.recv(1024)
+        data, frame_id, num_of_frames = get_data_from_frame(list(raw_data.decode()))
+        remove_bit_stuffing(data)
+
+        final_data += data
+
+        if(frame_id >= num_of_frames-1):
+            s.close() 
+            break
+
+    messsage = bit_list_to_string(final_data)
+    print(messsage)
 
 if __name__ == '__main__':
     main()
