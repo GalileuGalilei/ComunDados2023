@@ -22,6 +22,7 @@ def data_bit_stuffing(data):
         if data[i : i+6] == ['0', '1', '1', '1', '1', '1']:
             data.insert(i+6, '0')
 
+
 #monta o frame
 def make_frame(data, num_of_frames, frame_id):
     #monta a flag
@@ -57,7 +58,7 @@ def separate_data(data, num_of_frames):
 
     return data_pieces
 
-def main():
+def create_connection():
     s = socket.socket()		
     print ("Socket successfully created")
     port = 12345			
@@ -66,10 +67,18 @@ def main():
     print ("socket binded to %s" %(port))
 
     s.listen(5)	
-    print ("socket is listening")   
+    print ("socket is listening")
+
+    c, addr = s.accept()	
+    print ('Got connection from', addr )
+
+    return c
+
+def main():
+    c = create_connection()
 
     # define a mensagem a ser enviada e transforma em uma lista de bits
-    data = 'Chupa meu pau Amogus SUS hahaha memes cu sexo ola pessoal yee AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+    data = 'Chupa meu pau Amogus SUS hahaha memes cu sexo ola pessoal yee aeee caralhooooow fe da putAAAAAAAAAAAAAAAAAAA ps. Manda nudes fds'
     data = string_to_bit_list(data)
 
     #separa o dado a ser enviado em diferentes pedacos, que serao transformados em frames
@@ -80,22 +89,18 @@ def main():
     frames = []
     for i in range(num_of_frames):
         frame = make_frame(data_pieces[i], num_of_frames, i)
-        frames.append(frame)
-    	
-    c, addr = s.accept()	
-    print ('Got connection from', addr )
+        str = ''
+        for j in range(len(frame)):
+            str += frame[j]
+
+        frames.append(str.encode())
 
     i = 0
     while True:
-        #transforma a lista de bits em uma string de bits
-        str = ''
-        for j in range(len(frames[i])):
-            str += frames[i][j]
+        c.send(frames[i])
+        i+=1
 
-        c.send(str.encode())
-
-        i += 1
-        if(i >= num_of_frames):
+        if(i>= num_of_frames):
             c.close()
             break
 
