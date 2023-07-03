@@ -63,7 +63,9 @@ def main():
         if go_back.receive_frame_ack(frame_id):
             print("Frame valido")
 
-            s.send(bytes([frame_id]))
+            #50% de chance de cropar a confirmação
+            if frame_id % 2 == 0:
+               s.send(bytes([frame_id]))
             remove_bit_stuffing(data)
             final_data += data
 

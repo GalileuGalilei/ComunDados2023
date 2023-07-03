@@ -22,7 +22,7 @@ class go_back_n_arq_server:
 
     def __init__(self, window_size, max_frame_id, time_out):
         self.window_size = window_size
-        self.available_frames = window_size
+        self.available_frames = window_size + 1
         self.max_frame_id = max_frame_id
         self.time_out = time_out
         self.current_last_frame = -1
@@ -32,10 +32,10 @@ class go_back_n_arq_server:
     def receive_frame_ack(self, ack_id):
         #verifica se é um id esperado
         if(self.current_last_frame < ack_id):
-            if(ack_id + self.available_frames - self.current_last_frame > self.window_size):
+            if(ack_id - self.current_last_frame > self.window_size):
                 return 0
         else:
-            if(ack_id - self.available_frames < self.current_last_frame - self.window_size):
+            if(ack_id > self.current_last_frame):
                 return 0
         
         if(self.current_last_frame < ack_id):
