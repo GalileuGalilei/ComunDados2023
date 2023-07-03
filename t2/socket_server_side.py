@@ -69,13 +69,9 @@ def create_connection():
     s.listen(5)	
     print ("socket is listening")
 
-    c, addr = s.accept()	
-    print ('Got connection from', addr )
-
-    return c
+    return s
 
 def main():
-    c = create_connection()
 
     # define a mensagem a ser enviada e transforma em uma lista de bits
     data = 'Chupa meu pau Amogus SUS hahaha memes cu sexo ola pessoal yee aeee caralhooooow fe da putAAAAAAAAAAAAAAAAAAA ps. Manda nudes fds'
@@ -95,12 +91,21 @@ def main():
 
         frames.append(str.encode())
 
+
     i = 0
+    s = create_connection()
+    c, addr = s.accept()
+    print ('Got connection from', addr)
+
     while True:
-        c.send(frames[i])
+
+        c.recv(2048)
+        c.sendall(frames[i])
+
         i+=1
 
         if(i>= num_of_frames):
+            print("finished")
             c.close()
             break
 

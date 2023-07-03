@@ -48,17 +48,19 @@ def main():
     #string final para concatenar os dados dos frames
     final_data = []
     while True:
+        s.send(b'Hello server!')
         raw_data = s.recv(2048)
         print(raw_data)
+
+
         data, frame_id, num_of_frames = get_data_from_frame(list(raw_data.decode()))
         remove_bit_stuffing(data)
-
         final_data += data
 
         if(frame_id >= num_of_frames-1):
-            s.close() 
             break
-        #s.sendall(raw_data)
+
+    s.close() 
         
     messsage = bit_list_to_string(final_data)
     print(messsage)
