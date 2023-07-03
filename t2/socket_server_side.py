@@ -1,5 +1,6 @@
 import socket
-import math		
+import math	
+import go_back_n_arq	
 
 #converte um int para uma lista de bits
 def integer_to_bit_list(integer):
@@ -22,6 +23,8 @@ def data_bit_stuffing(data):
         if data[i : i+6] == ['0', '1', '1', '1', '1', '1']:
             data.insert(i+6, '0')
 
+def list_to_string(list):
+    return ''.join(list)
 
 #monta o frame
 def make_frame(data, num_of_frames, frame_id):
@@ -81,33 +84,37 @@ def main():
     num_of_frames = math.ceil(len(data)/100)
     data_pieces = separate_data(data, num_of_frames)
 
-    #monta os frames
-    frames = []
-    for i in range(num_of_frames):
-        frame = make_frame(data_pieces[i], num_of_frames, i)
-        str = ''
-        for j in range(len(frame)):
-            str += frame[j]
-
-        frames.append(str.encode())
-
 
     i = 0
     s = create_connection()
     c, addr = s.accept()
+    go_back = go_back_n_arq.go_back_n_arq_server(4, 12, 1)
     print ('Got connection from', addr)
+    first = True
 
     while True:
 
-        c.recv(2048)
-        c.sendall(frames[i])
+        if not first:
+            ack = c.recv(2048)
+        else:
+            ack = b''
+        first = False
 
-        i+=1
+        if ack == b'':
+            print("client connected")
+        else:
+            i += go_back.receive_frame_ack(int.from_bytes(ack, "big"))
 
-        if(i>= num_of_frames):
+        if(i >= num_of_frames):
             print("finished")
             c.close()
             break
+
+        frame_id = go_back.send_frame_ack(0)
+        if(frame_id == -1):
+            continue
+        c.sendall(list_to_string(make_frame(data_pieces[i], num_of_frames, frame_id)).encode())
+
 
 if __name__ == '__main__':
     main()

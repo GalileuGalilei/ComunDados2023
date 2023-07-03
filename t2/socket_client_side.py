@@ -1,5 +1,6 @@
 # Import socket module
-import socket                    
+import socket                  
+import go_back_n_arq  
  
 def get_data_from_frame(frame):
     #monta a flag referencia
@@ -47,18 +48,30 @@ def main():
 
     #string final para concatenar os dados dos frames
     final_data = []
+
+    #primeira mensagem
+    go_back = go_back_n_arq.go_back_n_arq_client(4, 12)
+    s.send(b'')
+
     while True:
-        s.send(b'Hello server!')
+
         raw_data = s.recv(2048)
-        print(raw_data)
-
-
+        #print(raw_data)
         data, frame_id, num_of_frames = get_data_from_frame(list(raw_data.decode()))
-        remove_bit_stuffing(data)
-        final_data += data
 
-        if(frame_id >= num_of_frames-1):
-            break
+        #verifica se o frame é valido
+        if go_back.receive_frame_ack(frame_id):
+            print("Frame valido")
+
+            s.send(bytes([frame_id]))
+            remove_bit_stuffing(data)
+            final_data += data
+
+            if(frame_id >= num_of_frames-1):
+                print("Fim da transmissao")
+                break
+        else:
+            print("Frame invalido")
 
     s.close() 
         
