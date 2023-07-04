@@ -96,7 +96,6 @@ def main():
     while True:            
 
         if first:
-        if first:
             print("client connected")
             
             first = False
