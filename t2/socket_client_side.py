@@ -1,6 +1,16 @@
 # Import socket module
 import socket                  
 import go_back_n_arq  
+
+def get_rest(trailer):
+    for i in range(trailer.len()):
+        if trailer[i] != 0:
+            return i
+        
+def check_crc(data):
+    dvd = int(''.join(data[:]), 2)
+    dvs = int(''.join([1, 1, 0, 1]), 2)
+    return (dvd % dvs) == 0
  
 def get_data_from_frame(frame):
     #monta a flag referencia
@@ -16,29 +26,36 @@ def get_data_from_frame(frame):
     if flag != flag2:
         print("Error: flag != flag2")
         return None
-    
-    #verifica o trailer
-    if trailer != ['0'] * 8:
-        print("Error: trailer != ['0'] * 8")
-        return None
-    
+
     frame_id = int(''.join(header[:8]), 2)
     num_of_frames = int(''.join(header[8:]), 2)
 
     #retorna a mensagem
     return data, frame_id, num_of_frames
 
-#separa os frames com base nas flags de inicio e fim
-def separate_data_in_frames(data):
+def separate_data_in_frames(raw_data):
+    start = 0
+    end = 0
     frames = []
     frame = []
-    for i in range(len(data) - 7):
-        if data[i : i+8] == ['0', '1', '1', '1', '1', '1', '1', '0']:
-            frame.append(data[i : i+8])
-            frames.append(frame)
-            frame = []
-        else:
-            frame.append(data[i])
+    flag =  ['0', '1', '1', '1', '1', '1', '1', '0'] 
+    
+    flag_count = 0
+    for i in range(len(raw_data) - 7):
+        if(raw_data[i:i+8] == flag):
+            flag_count += 1
+
+            if(flag_count == 1):
+                frame_start = i
+            
+            if(flag_count == 2):
+                frame_end = i+8
+
+                frame = raw_data[frame_start:frame_end] 
+                frames.append(frame)
+                # i = frame_end 
+                flag_count = 0
+
     return frames
 
 #converte lista de bits pra string
@@ -69,27 +86,38 @@ def main():
     while True:
 
         raw_data = s.recv(2048)
-        frames = get_data_from_frame(list(raw_data.decode()))
-        for (data, frame_id, num_of_frames) in frames:
-            print(data)
+        if not raw_data:
+            print('recebeu vazio')
+            break
+    
+        frames = separate_data_in_frames(list(raw_data.decode()))
+        last_frame_id = -1
+        
+        for frame in frames:
+            data, frame_id, num_of_frames = get_data_from_frame(frame)
+            
             #verifica se o frame é valido
+            print("frame = %d" %(frame_id) )
             if go_back.receive_frame_ack(frame_id):
                 print("Frame valido")
 
-                #50% de chance de cropar a confirmação
-                if frame_id % 2 == 0:
-                s.send(bytes([frame_id]))
                 remove_bit_stuffing(data)
                 final_data += data
+                last_frame_id = frame_id
 
-                if(frame_id >= num_of_frames-1):
-                    print("Fim da transmissao")
-                    break
             else:
                 print("Frame invalido")
+                break
+                
+        if last_frame_id != -1:
+            print("enviado ack = ", last_frame_id)
+            s.send(bytes([last_frame_id]))
+
+        if(last_frame_id >= num_of_frames-1):
+            print("Fim da transmissao")
+            break
 
     s.close() 
-        
     messsage = bit_list_to_string(final_data)
     print(messsage)
 

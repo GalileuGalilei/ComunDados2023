@@ -92,18 +92,20 @@ def main():
     go_back = go_back_n_arq.go_back_n_arq_server(4, 12, 1)
     print ('Got connection from', addr)
     first = True
-    ack = b'mm'
-
-    while True:
+    ack = b'XX' #valor impossível                                                                             
+                                        
+    while True:            
 
         if first:
             print("client connected")
+            
             first = False
         else:
-            id = int.from_bytes(ack, "big")
-            i += go_back.receive_frame_ack(id)
+            i += go_back.receive_frame_ack(int.from_bytes(ack, "big"))
+            print("novo i = ", i)
 
         if(i >= num_of_frames):
+            ack = c.recv(1024)
             print("finished")
             c.close()
             break
@@ -111,6 +113,7 @@ def main():
         frame_id = go_back.send_frame_ack(0)
         if(frame_id == -1):
             ack = c.recv(2048)
+            print('ack eh', int.from_bytes(ack, "big"))
             continue
         c.sendall(list_to_string(make_frame(data_pieces[i + frame_id], num_of_frames, frame_id)).encode())
         time.sleep(1)
