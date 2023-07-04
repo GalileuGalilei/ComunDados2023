@@ -22,7 +22,7 @@ class go_back_n_arq_server:
 
     def __init__(self, window_size, max_frame_id, time_out):
         self.window_size = window_size
-        self.available_frames = window_size
+        self.available_frames = window_size + 1
         self.max_frame_id = max_frame_id
         self.time_out = time_out
         self.current_last_frame = -1
@@ -32,17 +32,26 @@ class go_back_n_arq_server:
     def receive_frame_ack(self, ack_id):
         #verifica se é um id esperado
         if(self.current_last_frame < ack_id):
-            if(ack_id + self.available_frames - self.current_last_frame > self.window_size):
+            #caso easy
+            if(ack_id - self.current_last_frame > self.window_size):
+                #print("VARIAVEL FORA DO RANGE DA JANELA ERRO")  
                 return 0
         else:
-            if(ack_id - self.available_frames < self.current_last_frame - self.window_size):
+            #caso chato
+            if(ack_id > self.current_last_frame):
+                #print("VARIAVEL FORA DO RANGE DA JANELA ERRO")  
                 return 0
         
-        if(self.current_last_frame < ack_id):
-            diff = self.max_frame_id - ack_id + self.current_last_frame + 1
-        else:
-            diff = self.current_last_frame - ack_id
 
+        if(self.current_last_frame <= ack_id):
+            print('caso chato')
+            diff = self.max_frame_id - ack_id + self.current_last_frame
+        else:
+            print('caso easy')
+            diff = ack_id
+        # mandou 0 1 2 3 4 
+        # recebe 0 1
+        # janela     2 3 4 5 6
         self.available_frames += diff + 1
         self.timer = 0
 
