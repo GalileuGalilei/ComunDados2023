@@ -15,17 +15,20 @@ def check_crc(data):
 def get_data_from_frame(frame):
     #monta a flag referencia
     flag = ['0', '1', '1', '1', '1', '1', '1', '0']
-
-    #pega o header, corpo da msg, trailer e flag da msg
-    header = frame[8:24]
-    data = frame[24:-16]
-    trailer = frame[-16:-8]
     flag2 = frame[-8:]
 
     #compara as flags
     if flag != flag2:
         print("Error: flag != flag2")
         return None
+    
+    tmp = frame[8:-8]
+    tmp2 = remove_bit_stuffing(tmp)
+
+    #pega o header, corpo da msg, trailer e flag da msg
+    header = tmp2[:16]
+    data = tmp2[16:-8]
+    trailer = tmp2[-8:]
 
     frame_id = int(''.join(header[:8]), 2)
     num_of_frames = int(''.join(header[8:]), 2)
@@ -34,8 +37,6 @@ def get_data_from_frame(frame):
     return data, frame_id, num_of_frames
 
 def separate_data_in_frames(raw_data):
-    start = 0
-    end = 0
     frames = []
     frame = []
     flag =  ['0', '1', '1', '1', '1', '1', '1', '0'] 
@@ -53,7 +54,6 @@ def separate_data_in_frames(raw_data):
 
                 frame = raw_data[frame_start:frame_end] 
                 frames.append(frame)
-                # i = frame_end 
                 flag_count = 0
 
     return frames
@@ -69,55 +69,68 @@ def remove_bit_stuffing(data):
     for i in range(len(data) - 7):
         if data[i : i+7] == ['0', '1', '1', '1', '1', '1', '0']:
             data.pop(i+6)
+    
+    return data
 
 def main():
     # Cria um socket, associa a porta 12345 e conecta ao servidor local
     s = socket.socket()
     port = 12345   
-    s.connect(('127.0.0.1', port))
+    try:
+        s.connect(('127.0.0.1', port))
+    except socket.timeout:
+        print("timeout de conexao")
+        exit()
 
     #string final para concatenar os dados dos frames
     final_data = []
 
     #primeira mensagem
     go_back = go_back_n_arq.go_back_n_arq_client(4, 12)
-    s.send(b'')
+    try:
+        s.send(b'')
+    except socket.timeout:
+        print("timeout primeiro envio")
+        exit()
 
     while True:
-
         raw_data = s.recv(2048)
-        if not raw_data:
-            print('recebeu vazio')
-            break
-    
-        frames = separate_data_in_frames(list(raw_data.decode()))
-        last_frame_id = -1
-        
-        for frame in frames:
-            data, frame_id, num_of_frames = get_data_from_frame(frame)
+
+        if raw_data:
+            frames = separate_data_in_frames(list(raw_data.decode()))
+            last_frame_id = -1
             
-            #verifica se o frame é valido
-            print("frame = %d" %(frame_id) )
-            if go_back.receive_frame_ack(frame_id):
-
-                print("Frame valido")
-
-                remove_bit_stuffing(data)
-                final_data += data
-                last_frame_id = frame_id
-
-            else:
-                print("Frame invalido")
-                s.send(bytes([255]))
+            for frame in frames:
+                data, frame_id, num_of_frames = get_data_from_frame(frame)
                 
-        if last_frame_id != -1:
-            print("enviado ack = ", last_frame_id)
-            s.send(bytes([last_frame_id]))
+                #verifica se o frame eh valido
+                if go_back.receive_frame_ack(frame_id):
 
-        if(last_frame_id >= num_of_frames-1):
-            s.send(b'')
-            print("Fim da transmissao")
-            break
+                    print("Frame ", frame_id, " VALIDO")
+                    final_data += data
+                    last_frame_id = frame_id
+
+                else:
+                    print("Frame ", frame_id, " INVALIDO")
+
+                    
+            if last_frame_id != -1:
+                print("acknoledge frame ", frame_id)
+                message = str(last_frame_id) + "_"
+                s.send(message.encode())
+                #message = last_frame_id.to_bytes(4, 'big', signed=True)
+                #s.send(message)     
+                        
+
+            if(last_frame_id == num_of_frames-1):
+                last_frame_id = -2
+                message = str(last_frame_id) + "_"
+                s.send(message.encode())
+                #message = last_frame_id.to_bytes(4, 'big', signed=True)
+                #s.send(message) 
+
+                print("Fim da transmissao")
+                break
 
     s.close() 
     messsage = bit_list_to_string(final_data)
