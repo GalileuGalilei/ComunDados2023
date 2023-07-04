@@ -1,6 +1,7 @@
 import socket
 import math	
 import go_back_n_arq	
+import time
 
 #converte um int para uma lista de bits
 def integer_to_bit_list(integer):
@@ -111,7 +112,8 @@ def main():
         if(frame_id == -1):
             ack = c.recv(2048)
             continue
-        c.sendall(list_to_string(make_frame(data_pieces[i], num_of_frames, frame_id)).encode())
+        c.sendall(list_to_string(make_frame(data_pieces[i + frame_id], num_of_frames, frame_id)).encode())
+        time.sleep(1)
 
 
 if __name__ == '__main__':

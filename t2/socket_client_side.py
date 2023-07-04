@@ -28,6 +28,19 @@ def get_data_from_frame(frame):
     #retorna a mensagem
     return data, frame_id, num_of_frames
 
+#separa os frames com base nas flags de inicio e fim
+def separate_data_in_frames(data):
+    frames = []
+    frame = []
+    for i in range(len(data) - 7):
+        if data[i : i+8] == ['0', '1', '1', '1', '1', '1', '1', '0']:
+            frame.append(data[i : i+8])
+            frames.append(frame)
+            frame = []
+        else:
+            frame.append(data[i])
+    return frames
+
 #converte lista de bits pra string
 def bit_list_to_string(bit_list):
     byte_list = ["".join(bit_list[i:i+8]) for i in range(0, len(bit_list), 8)]  # Group bits into bytes
@@ -56,24 +69,24 @@ def main():
     while True:
 
         raw_data = s.recv(2048)
-        #print(raw_data)
-        data, frame_id, num_of_frames = get_data_from_frame(list(raw_data.decode()))
+        frames = get_data_from_frame(list(raw_data.decode()))
+        for (data, frame_id, num_of_frames) in frames:
+            print(data)
+            #verifica se o frame é valido
+            if go_back.receive_frame_ack(frame_id):
+                print("Frame valido")
 
-        #verifica se o frame é valido
-        if go_back.receive_frame_ack(frame_id):
-            print("Frame valido")
+                #50% de chance de cropar a confirmação
+                if frame_id % 2 == 0:
+                s.send(bytes([frame_id]))
+                remove_bit_stuffing(data)
+                final_data += data
 
-            #50% de chance de cropar a confirmação
-            if frame_id % 2 == 0:
-               s.send(bytes([frame_id]))
-            remove_bit_stuffing(data)
-            final_data += data
-
-            if(frame_id >= num_of_frames-1):
-                print("Fim da transmissao")
-                break
-        else:
-            print("Frame invalido")
+                if(frame_id >= num_of_frames-1):
+                    print("Fim da transmissao")
+                    break
+            else:
+                print("Frame invalido")
 
     s.close() 
         
