@@ -1,3 +1,6 @@
+import random
+import time
+
 class go_back_n_arq_client:
 
     def __init__(self, windows_size, max_frame_id):
@@ -7,10 +10,9 @@ class go_back_n_arq_client:
 
     #executa toda vez que o client receber um pacote
     def receive_frame_ack(self, ack_id):
-        if ack_id == self.expected_frame:
+        #10% de chance de perder o pacote
+        if ack_id == self.expected_frame and random.randint(0, 100) < 50:
             self.expected_frame += 1
-            if self.expected_frame > self.max_frame_id:
-                self.expected_frame = 0
             return True
         else:
             return False
@@ -28,53 +30,42 @@ class go_back_n_arq_server:
         self.time_out = time_out
         self.current_last_frame = -1
         self.timer = 0
+        self.last_timer_reset = time.time()
 
     #executa toda vez que o server receber um pacote
     def receive_frame_ack(self, ack_id):
         #verifica se é um id esperado
-        if(self.current_last_frame < ack_id):
-            #caso easy
-            if(ack_id - self.current_last_frame > self.window_size):
-                #print("VARIAVEL FORA DO RANGE DA JANELA ERRO")  
-                return 0
-        else:
-            #caso chato
-            if(ack_id > self.current_last_frame):
-                #print("VARIAVEL FORA DO RANGE DA JANELA ERRO")  
-                return 0
-        
-
-        if(self.current_last_frame <= ack_id):
-            print('caso chato')
-            diff = self.max_frame_id - ack_id + self.current_last_frame
-        else:
-            print('caso easy')
-            diff = ack_id
-        # mandou 0 1 2 3 4 
-        # recebe 0 1
-        # janela     2 3 4 5 6
-        self.available_frames += diff + 1
-        self.timer = 0
-
-        return diff + 1
-    
-    #executa toda santa iteração do loop
-    def send_frame_ack(self, delta_time):
-
-        self.timer += delta_time
-        if self.timer > self.time_out:
-            print("Time out")
-            self.timer = 0
+        if ack_id == 255:
             self.available_frames = self.window_size
             self.current_last_frame -= self.window_size
             if self.current_last_frame < 0:
-                self.current_last_frame = self.max_frame_id + self.current_last_frame + 1
+                self.current_last_frame = 0
+            return 0
+
+        if(ack_id > self.current_last_frame or ack_id < self.current_last_frame - self.window_size):
+            return 0
+            
+        diff = self.window_size - (self.current_last_frame - ack_id) + 1
+        self.available_frames += diff
+        self.last_timer_reset = time.time()
+
+        return diff
+    
+    #executa toda santa iteração do loop
+    def send_frame_ack(self):
+
+        self.timer = time.time() - self.last_timer_reset
+        if self.timer > self.time_out:
+            print("Time out")
+            self.last_timer_reset = time.time()
+            self.available_frames = self.window_size
+            self.current_last_frame -= self.window_size
+            if self.current_last_frame < 0:
+                self.current_last_frame = 0
 
         if self.available_frames == 0:
             return -1
         
         self.available_frames -= 1
         self.current_last_frame += 1
-        if self.current_last_frame > self.max_frame_id:
-            self.current_last_frame = 0
         return self.current_last_frame

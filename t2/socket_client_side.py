@@ -99,6 +99,7 @@ def main():
             #verifica se o frame é valido
             print("frame = %d" %(frame_id) )
             if go_back.receive_frame_ack(frame_id):
+
                 print("Frame valido")
 
                 remove_bit_stuffing(data)
@@ -107,13 +108,14 @@ def main():
 
             else:
                 print("Frame invalido")
-                break
+                s.send(bytes([255]))
                 
         if last_frame_id != -1:
             print("enviado ack = ", last_frame_id)
             s.send(bytes([last_frame_id]))
 
         if(last_frame_id >= num_of_frames-1):
+            s.send(b'')
             print("Fim da transmissao")
             break
 
