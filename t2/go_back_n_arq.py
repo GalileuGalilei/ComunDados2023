@@ -23,6 +23,7 @@ class go_back_n_arq_server:
     def __init__(self, window_size, max_frame_id, time_out):
         self.window_size = window_size
         self.available_frames = window_size + 1
+        self.available_frames = window_size + 1
         self.max_frame_id = max_frame_id
         self.time_out = time_out
         self.current_last_frame = -1
