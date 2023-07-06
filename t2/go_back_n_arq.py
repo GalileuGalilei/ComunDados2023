@@ -10,7 +10,7 @@ class go_back_n_arq_client:
     #executa toda vez que o client receber um pacote
     def receive_frame_ack(self, ack_id):
         #10% de chance de perder o pacote
-        if ack_id == self.expected_frame and random.randint(0, 100) < 90:
+        if ack_id == self.expected_frame and random.randint(0, 100) < 100:
             self.expected_frame += 1
             return True
         else:

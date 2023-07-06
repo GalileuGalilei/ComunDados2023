@@ -1,5 +1,7 @@
 # Import socket module
+import random
 import socket                  
+import crc
 import go_back_n_arq  
 
 def get_rest(trailer):
@@ -34,7 +36,7 @@ def get_data_from_frame(frame):
     num_of_frames = int(''.join(header[8:]), 2)
 
     #retorna a mensagem
-    return data, frame_id, num_of_frames
+    return data, int(''.join(trailer[:]), 2), frame_id, num_of_frames
 
 def separate_data_in_frames(raw_data):
     frames = []
@@ -72,6 +74,14 @@ def remove_bit_stuffing(data):
     
     return data
 
+def force_error(data):
+    r = random.randint(0, 100)
+    if r < 10: # 10% de chance de erro
+        print("Erro forçado")
+        for i in range(0, len(data), 20):
+            data[i] = str(1 - int(data[i]))
+            
+
 def main():
     # Cria um socket, associa a porta 12345 e conecta ao servidor local
     s = socket.socket()
@@ -87,6 +97,8 @@ def main():
 
     #primeira mensagem
     go_back = go_back_n_arq.go_back_n_arq_client(4, 12)
+    #crc-8
+    polynomial = '100000111'
     try:
         s.send(b'')
     except socket.timeout:
@@ -100,12 +112,16 @@ def main():
             frames = separate_data_in_frames(list(raw_data.decode()))
             last_frame_id = -1
             for frame in frames:
-                data, frame_id, num_of_frames = get_data_from_frame(frame)
+                data, remain_len, frame_id, num_of_frames = get_data_from_frame(frame)
                 
+                #forca um erro no frame
+                force_error(data)
+
                 #verifica se o frame eh valido
-                if go_back.receive_frame_ack(frame_id):
+                if crc.check_CRC(data, polynomial) and go_back.receive_frame_ack(frame_id):
 
                     print("Frame ", frame_id, " VALIDO")
+                    data = data[0 : -remain_len]
                     final_data += data
                     last_frame_id = frame_id
 

@@ -1,6 +1,7 @@
 import socket
 import math	
 import go_back_n_arq	
+import crc
 
 #converte um int para uma lista de bits
 def integer_to_bit_list(integer):
@@ -26,7 +27,7 @@ def list_to_string(list):
     return ''.join(list)
 
 #monta o frame
-def make_frame(data, num_of_frames, frame_id):
+def make_frame(data, polynomial, num_of_frames, frame_id):
     #monta a flag
     flag = ['0', '1', '1', '1', '1', '1', '1', '0']
 
@@ -35,8 +36,11 @@ def make_frame(data, num_of_frames, frame_id):
     header += integer_to_bit_list(frame_id)
     header += integer_to_bit_list(num_of_frames)
 
-    #monta o trailer, por enquanto, 8 '0's
-    trailer = ['0'] * 8
+    #monta o trailer com o crc
+    remainder = crc.CRC(list_to_string(data), polynomial)
+    
+    data += list(remainder)
+    trailer = integer_to_bit_list(len(remainder))
 
     #monta uma lista temporaria com header data e trailer
     tmp = []
@@ -98,6 +102,8 @@ def main():
     #separa o dado a ser enviado em diferentes pedacos, que serao transformados em frames
     num_of_frames = int(math.ceil(len(data)/100))
     data_pieces = separate_data(data, num_of_frames)
+    #polinomio para crc-8
+    polynomial = '100000111'
 
 
     s = create_connection()
@@ -144,7 +150,7 @@ def main():
                 print("timeout recieve")
         else: #se ainda tem frames para mandar, manda
             try:
-                frame = make_frame(data_pieces[frame_id], num_of_frames, frame_id)
+                frame = make_frame(data_pieces[frame_id], polynomial, num_of_frames, frame_id)
                 c.sendall(list_to_string(frame).encode())
             except socket.timeout:
                 print("send timeout")
