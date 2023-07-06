@@ -39,13 +39,13 @@ def make_frame(data, polynomial, num_of_frames, frame_id):
     #monta o trailer com o crc
     remainder = crc.CRC(list_to_string(data), polynomial)
     
-    data += list(remainder)
     trailer = integer_to_bit_list(len(remainder))
 
     #monta uma lista temporaria com header data e trailer
     tmp = []
     tmp += header
     tmp += data
+    tmp += list(remainder)
     tmp += trailer
 
     #faz bit stuffing da mensagem com header e trailer
@@ -71,7 +71,6 @@ def separate_data(data, num_of_frames):
 #retorna apenas a ultima mensagem de acknoledge enviada pelo cliente, caso alguns acks tenham sido concatenados
 def separate_ack(ack):
     acks = ack.split("_")
-    print(acks)
 
     if(len(acks) < 2):
         return -1
@@ -95,8 +94,7 @@ def create_connection():
 def main():
 
     # define a mensagem a ser enviada e transforma em uma lista de bits
-    #data = "No silencio espacial, tracoeiro eh o embuste, Um impostor oculto, um ser que seduz. Entre a tripulacao, um rosto oculto, No jogo de confianca, o Impostor eh astuto. Nas sombras ele se esconde, sorrateiro, Disfarcado de um amigo verdadeiro. Com olhos ardilosos, traca seu caminho, Espalhando enganos, semeando o desalinho. Passo a passo, ele tece sua rede, Manipula a mente, semeia a descrenca. Uma mascara perfeita, uma identidade falsa, Enredado nas mentiras, ele avanca. Em meio as tarefas e comunicacao, O Impostor provoca desconfianca e tensao. Cada suspeita, cada olhar desconfiado, Ele joga seu jogo, mantendo-se mascarado. Os corpos se acumulam, as acusacoes surgem, O Impostor ri, enquanto o caos se insurge. Mas o tempo eh seu inimigo, a pressa o consome, A tripulacao unida, determinada a encontrar o que se esconde. Por fim, a mascara cai, a verdade e revelada, O Impostor eh desmascarado, a farsa dissipada. Entre vidas perdidas e traicoes sofridas, A tripulacao vence, a vitoria eh conquistada. No jogo de Among Us, o Impostor eh a incognita, Um desafio ardiloso, uma historia infinita. Um poema se tece sobre esse ser ardente, Um impostor no jogo, eternamente surpreendente."
-    data = "Ai! No alto daquele cume\n Plantei uma roseira\n O vento no cume bate\n A rosa no cume cheira\n Quando vem a chuva fina\n Salpicos no cume caem\n Formigas no cume entram\n Abelhas do cume saem\n Quando cai a chuva grossa\n A água do cume desce\n O barro do cume escorre\n O mato no cume cresce\n Então, quando cessa a chuva\n No cume volta a alegria\n Pois torna a brilhar de novo\n O Sol que no cume ardia\n No alto daquele cume\n Plantei uma roseira\n O vento no cume bate A rosa no cume cheira Quando vem a chuva fina Salpicos no cume caem Formigas no cume entram Abelhas do cume saem Quando cai a chuva grossa A água do cume desce O barro do cume escorre O mato no cume cresce Então, quando cessa a chuva No cume volta a alegria Pois torna a brilhar de novo O Sol que no cume ardia Pois torna a brilhar de novo O Sol que no cume ardia Pois torna a brilhar de novo O Sol que no cume ardia"
+    data = "\nNo vasto cosmos, uma nave flutua,\nEntre tripulantes, segredos se insinuam.\nNo jogo de traicao, intriga e suspense,\nAmong Us revela-se, um verdadeiro cadence.\n\nNa sala de reunioes, mentes se confrontam,\nOlhares desconfiados, acusacoes que assombram.\nCada suspeito tem um alibi em seu favor,\nMas a verdade esconde-se alem do rumor.\n\nEntre corredores sombrios, em silencio caminham,\nProcurando pistas, enquanto a nave estremece e gira.\nUma tarefa inacabada, uma sabotagem fria,\nA busca pela verdade jamais se adia.\n\nAs votacoes decidem o destino de todos,\nLealdade e astucia, sao seus maiores modos.\nQuem e o impostor, o infiltrado traidoeiro?\nDesvendar esse enigma e o grande truque derradeiro.\n\nEntre o caos e a desconfianca, a camaradagem resiste,\nTripulantes unidos, buscando um final que persiste.\nNas reunioes emergem historias e aliancas,\nEntre acusacoes e jogadas, emocoes e esperancas.\n\nAmong Us, o jogo de suspense e decepcao,\nOnde a estrategia se entrelaca a diversao.\nEm cada partida, uma nova narrativa se desenha,\nOnde a vitoria e conquistada, mas a desconfianca permanece.\n\nPortanto, tripulantes, estejam preparados,\nPara enfrentar traidores, serem astutos e ousados.\nEm cada partida, um novo desafio emerge,\nEntre suspeitas e misterios, a verdade se converge.\n\nEntre amigos e desconhecidos, a jornada continua,\nAmong Us, o jogo que cativa e perpetua.\nDesvende os enigmas, encontre o impostor,\nE mergulhe neste universo de traicao e temor."
     data = string_to_bit_list(data)
 
     #separa o dado a ser enviado em diferentes pedacos, que serao transformados em frames
@@ -131,6 +129,7 @@ def main():
             try:   
                 ack = c.recv(1024).decode()
                 ack = separate_ack(ack)
+                print("recieved ack " + ack)
             except socket.timeout: #caso nao receba a resposta, chama a funcao trigger_timeout, que volta a janela
                 print('timeout recieve')
                 go_back.trigger_timeout()
@@ -142,6 +141,7 @@ def main():
             try:
                 ack = c.recv(2048).decode()
                 ack = separate_ack(ack)
+                print("recieved ack " + ack)
                 if ack == '-2': #se o client enviou -2, significa que ele processou todos os frames
                     print('client disconnected')
                     c.close()
@@ -150,6 +150,7 @@ def main():
                 print("timeout recieve")
         else: #se ainda tem frames para mandar, manda
             try:
+                print("sent frame ", frame_id)
                 frame = make_frame(data_pieces[frame_id], polynomial, num_of_frames, frame_id)
                 c.sendall(list_to_string(frame).encode())
             except socket.timeout:

@@ -74,5 +74,4 @@ def CRC(data, key):
 
 def check_CRC(data, key):
 	rest = mod2div(data, key)
-	print("rest: ", rest)
 	return int(rest, 2) == 0

@@ -78,7 +78,7 @@ def force_error(data):
     r = random.randint(0, 100)
     if r < 10: # 10% de chance de erro
         print("Erro forçado")
-        for i in range(0, len(data), 20):
+        for i in range(0, len(data), 5):
             data[i] = str(1 - int(data[i]))
             
 
@@ -113,16 +113,22 @@ def main():
             last_frame_id = -1
             for frame in frames:
                 data, remain_len, frame_id, num_of_frames = get_data_from_frame(frame)
+
+                remaining = data[-remain_len:]
+                data_aux = data[:-remain_len]
+                data = data[:-remain_len]
+
                 
                 #forca um erro no frame
                 force_error(data)
+
+                data += remaining
 
                 #verifica se o frame eh valido
                 if crc.check_CRC(data, polynomial) and go_back.receive_frame_ack(frame_id):
 
                     print("Frame ", frame_id, " VALIDO")
-                    data = data[0 : -remain_len]
-                    final_data += data
+                    final_data += data_aux
                     last_frame_id = frame_id
 
                 else:
@@ -133,17 +139,12 @@ def main():
                 print("acknoledge frame ", frame_id)
                 message = str(last_frame_id) + "_"
                 s.send(message.encode())
-                #message = last_frame_id.to_bytes(4, 'big', signed=True)
-                #s.send(message)     
                         
 
             if(last_frame_id == num_of_frames-1):
                 last_frame_id = -2
                 message = str(last_frame_id) + "_"
                 s.send(message.encode())
-                #message = last_frame_id.to_bytes(4, 'big', signed=True)
-                #s.send(message) 
-
                 print("Fim da transmissao")
                 break
 
