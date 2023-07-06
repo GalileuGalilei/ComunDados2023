@@ -92,7 +92,7 @@ def main():
 
     # define a mensagem a ser enviada e transforma em uma lista de bits
     #data = "No silencio espacial, tracoeiro eh o embuste, Um impostor oculto, um ser que seduz. Entre a tripulacao, um rosto oculto, No jogo de confianca, o Impostor eh astuto. Nas sombras ele se esconde, sorrateiro, Disfarcado de um amigo verdadeiro. Com olhos ardilosos, traca seu caminho, Espalhando enganos, semeando o desalinho. Passo a passo, ele tece sua rede, Manipula a mente, semeia a descrenca. Uma mascara perfeita, uma identidade falsa, Enredado nas mentiras, ele avanca. Em meio as tarefas e comunicacao, O Impostor provoca desconfianca e tensao. Cada suspeita, cada olhar desconfiado, Ele joga seu jogo, mantendo-se mascarado. Os corpos se acumulam, as acusacoes surgem, O Impostor ri, enquanto o caos se insurge. Mas o tempo eh seu inimigo, a pressa o consome, A tripulacao unida, determinada a encontrar o que se esconde. Por fim, a mascara cai, a verdade e revelada, O Impostor eh desmascarado, a farsa dissipada. Entre vidas perdidas e traicoes sofridas, A tripulacao vence, a vitoria eh conquistada. No jogo de Among Us, o Impostor eh a incognita, Um desafio ardiloso, uma historia infinita. Um poema se tece sobre esse ser ardente, Um impostor no jogo, eternamente surpreendente."
-    data = "Ai! No alto daquele cume Plantei uma roseira O vento no cume bate A rosa no cume cheira Quando vem a chuva fina Salpicos no cume caem Formigas no cume entram Abelhas do cume saem Quando cai a chuva grossa A água do cume desce O barro do cume escorre O mato no cume cresce Então, quando cessa a chuva No cume volta a alegria Pois torna a brilhar de novo O Sol que no cume ardia No alto daquele cume Plantei uma roseira O vento no cume bate A rosa no cume cheira Quando vem a chuva fina Salpicos no cume caem Formigas no cume entram Abelhas do cume saem Quando cai a chuva grossa A água do cume desce O barro do cume escorre O mato no cume cresce Então, quando cessa a chuva No cume volta a alegria Pois torna a brilhar de novo O Sol que no cume ardia Pois torna a brilhar de novo O Sol que no cume ardia Pois torna a brilhar de novo O Sol que no cume ardia"
+    data = "Ai! No alto daquele cume\n Plantei uma roseira\n O vento no cume bate\n A rosa no cume cheira\n Quando vem a chuva fina\n Salpicos no cume caem\n Formigas no cume entram\n Abelhas do cume saem\n Quando cai a chuva grossa\n A água do cume desce\n O barro do cume escorre\n O mato no cume cresce\n Então, quando cessa a chuva\n No cume volta a alegria\n Pois torna a brilhar de novo\n O Sol que no cume ardia\n No alto daquele cume\n Plantei uma roseira\n O vento no cume bate A rosa no cume cheira Quando vem a chuva fina Salpicos no cume caem Formigas no cume entram Abelhas do cume saem Quando cai a chuva grossa A água do cume desce O barro do cume escorre O mato no cume cresce Então, quando cessa a chuva No cume volta a alegria Pois torna a brilhar de novo O Sol que no cume ardia Pois torna a brilhar de novo O Sol que no cume ardia Pois torna a brilhar de novo O Sol que no cume ardia"
     data = string_to_bit_list(data)
 
     #separa o dado a ser enviado em diferentes pedacos, que serao transformados em frames
@@ -129,6 +129,7 @@ def main():
                 print('timeout recieve')
                 go_back.trigger_timeout()
                 ack = '-1'
+            continue
 
         #se todos os frames ja foram mandados
         if(frame_id >= num_of_frames):
@@ -143,7 +144,8 @@ def main():
                 print("timeout recieve")
         else: #se ainda tem frames para mandar, manda
             try:
-                c.sendall(list_to_string(make_frame(data_pieces[frame_id], num_of_frames, frame_id)).encode())
+                frame = make_frame(data_pieces[frame_id], num_of_frames, frame_id)
+                c.sendall(list_to_string(frame).encode())
             except socket.timeout:
                 print("send timeout")
 

@@ -99,7 +99,6 @@ def main():
         if raw_data:
             frames = separate_data_in_frames(list(raw_data.decode()))
             last_frame_id = -1
-            
             for frame in frames:
                 data, frame_id, num_of_frames = get_data_from_frame(frame)
                 
